@@ -71,6 +71,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'InkWell API is running securely' });
 });
 
+// Root URL handler
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to the InkWell API!' });
+});
+
 // Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
