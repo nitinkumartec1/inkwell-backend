@@ -6,15 +6,12 @@ import Saved from '../models/Saved.js';
 import Like from '../models/Like.js';
 import cloudinary from '../config/cloudinary.js';
 
-const signAccessToken = (id) => {
-  return jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET, {
-    expiresIn: process.env.ACCESS_TOKEN_EXPIRY || '15m',
-  });
-};
-
-const signRefreshToken = (id) => {
-  return jwt.sign({ id }, process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET, {
-    expiresIn: process.env.REFRESH_TOKEN_EXPIRY || '7d',
+/**
+ * Generate a signed JWT for admin sessions.
+ */
+const signToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRE || '7d',
   });
 };
 
@@ -49,27 +46,10 @@ export const adminLogin = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const accessToken = signAccessToken(user._id);
-    const refreshToken = signRefreshToken(user._id);
-
-    const isProduction = process.env.NODE_ENV === 'production';
-
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'strict',
-      maxAge: 15 * 60 * 1000, // 15 mins
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    const token = signToken(user._id);
 
     res.json({
-      token: accessToken, // Kept for backwards compatibility
+      token,
       user: {
         _id: user._id,
         name: user.name,
@@ -102,16 +82,6 @@ export const getAdminMe = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-// ─── Admin Logout ──────────────────────────────────────────────
-// @desc    Clear cookies to logout admin
-// @route   POST /api/admin/logout
-export const adminLogout = async (req, res) => {
-  res.clearCookie('accessToken');
-  res.clearCookie('refreshToken');
-  res.json({ message: 'Logged out successfully' });
-};
-
 
 // ─── Dashboard Stats ───────────────────────────────────────────
 // @desc    Get platform-wide analytics for the admin dashboard

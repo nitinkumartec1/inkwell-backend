@@ -9,6 +9,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import User from '../models/User.js';
+import admin from '../config/firebase.js';
 
 dotenv.config();
 
@@ -25,6 +26,26 @@ const seedAdmin = async () => {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('📦  Connected to MongoDB');
 
+    // 1. Ensure user exists in Firebase Auth (since frontend uses Firebase)
+    try {
+      const fbUser = await admin.auth().getUserByEmail(ADMIN_EMAIL);
+      console.log(`✅  Found existing admin user in Firebase Auth.`);
+      await admin.auth().updateUser(fbUser.uid, { password: ADMIN_PASSWORD });
+      console.log(`✅  Updated existing admin password in Firebase Auth.`);
+    } catch (err) {
+      if (err.code === 'auth/user-not-found') {
+        await admin.auth().createUser({
+          email: ADMIN_EMAIL,
+          password: ADMIN_PASSWORD,
+          displayName: 'Admin'
+        });
+        console.log(`✅  Created admin user in Firebase Auth.`);
+      } else {
+        throw err;
+      }
+    }
+
+    // 2. Ensure user exists in MongoDB
     let user = await User.findOne({ email: ADMIN_EMAIL });
 
     if (user) {
@@ -32,7 +53,7 @@ const seedAdmin = async () => {
       user.role = 'admin';
       user.password = ADMIN_PASSWORD; // will be hashed by pre-save hook
       await user.save();
-      console.log(`✅  Existing user "${user.username}" upgraded to admin.`);
+      console.log(`✅  Existing user "${user.username}" upgraded to admin in MongoDB.`);
     } else {
       // Create new admin user
       const username = ADMIN_EMAIL.split('@')[0].replace(/[^a-z0-9]/gi, '').toLowerCase();
@@ -42,9 +63,9 @@ const seedAdmin = async () => {
         email: ADMIN_EMAIL,
         password: ADMIN_PASSWORD, // will be hashed by pre-save hook
         role: 'admin',
-        provider: 'local',
+        provider: 'email', // Changed from local to email to match Firebase
       });
-      console.log(`✅  Admin user created: ${user.username} (${user.email})`);
+      console.log(`✅  Admin user created in MongoDB: ${user.username} (${user.email})`);
     }
 
     await mongoose.disconnect();

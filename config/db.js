@@ -1,25 +1,21 @@
 import mongoose from 'mongoose';
 
-let cachedDb = null;
+// Track the connection status
+let isConnected = false;
 
 const connectDB = async () => {
-  if (cachedDb) {
-    console.log('Using cached database instance');
-    return cachedDb;
+  if (isConnected) {
+    console.log('MongoDB is already connected');
+    return;
   }
 
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI);
-    cachedDb = conn;
+    isConnected = conn.connections[0].readyState === 1;
     console.log(`MongoDB Connected: ${conn.connection.host}`);
-    return conn;
   } catch (error) {
     console.error(`MongoDB connection error: ${error.message}`);
-    // In serverless, throwing the error is better than process.exit
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
-    }
-    throw error;
+    process.exit(1);
   }
 };
 
