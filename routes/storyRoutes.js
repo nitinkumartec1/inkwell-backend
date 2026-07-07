@@ -28,9 +28,9 @@ const router = express.Router();
 router.get('/search', searchStories);
 router.get('/analytics/me', protect, getAnalytics);
 router.get('/user/me', protect, getMyStories);
-router.get('/user/:userId', validate(idParamSchema), getUserStories);
-router.get('/user/:userId/liked', validate(idParamSchema), getLikedStories);
-router.get('/user/:userId/commented', validate(idParamSchema), getCommentedStories);
+router.get('/user/:id', validate(idParamSchema), getUserStories);
+router.get('/user/:id/liked', validate(idParamSchema), getLikedStories);
+router.get('/user/:id/commented', validate(idParamSchema), getCommentedStories);
 
 router
   .route('/')

@@ -222,11 +222,11 @@ export const getMyStories = async (req, res) => {
 };
 
 // @desc    Get stories by a specific user
-// @route   GET /api/stories/user/:userId
+// @route   GET /api/stories/user/:id
 export const getUserStories = async (req, res) => {
   try {
     const stories = await Story.find({
-      author: req.params.userId,
+      author: req.params.id,
       status: 'published',
     })
       .populate('author', 'name username profilePic')
@@ -301,10 +301,10 @@ export const getAnalytics = async (req, res) => {
 };
 
 // @desc    Get liked stories by user
-// @route   GET /api/stories/user/:userId/liked
+// @route   GET /api/stories/user/:id/liked
 export const getLikedStories = async (req, res) => {
   try {
-    const likes = await Like.find({ user: req.params.userId }).populate({
+    const likes = await Like.find({ user: req.params.id }).populate({
       path: 'story',
       populate: { path: 'author', select: 'name username profilePic' }
     });
@@ -316,10 +316,10 @@ export const getLikedStories = async (req, res) => {
 };
 
 // @desc    Get commented stories by user
-// @route   GET /api/stories/user/:userId/commented
+// @route   GET /api/stories/user/:id/commented
 export const getCommentedStories = async (req, res) => {
   try {
-    const comments = await Comment.find({ user: req.params.userId }).populate({
+    const comments = await Comment.find({ user: req.params.id }).populate({
       path: 'story',
       populate: { path: 'author', select: 'name username profilePic' }
     });
